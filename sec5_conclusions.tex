@@ -1,0 +1,19 @@
+\section{Conclusions}\label{sec:conclusions}
+
+%This work focus on the complete calibration of the kinematic model of a robot's head using only information from embedded sensors and non-linear filtering techniques. We have designed and implemented a calibration system at a kinematic level to be applied when the joints are equipped with relative encoders. The proposed system is able to rapidly estimate the offsets for each joint by using a non-linear filter together with information from the encoders, the IMU and the cameras. The sensor fusion allows the correct estimation of the joint offsets under any circumstance turning the system more robust and extremely adaptable. The results show an accurate calibration system that can easily calibrate a kinematic platform within a few iterations, which is important when the robotic platform is used on a daily basis, requiring a calibration procedure before executing a task.
+
+%The proposed system was designed to be as general as possible so it could easily calibrate almost any kinematic model using information from the embedded sensors only. Although, for certain configurations of the joints, it is impossible to correctly calibrate the offsets due to observability problems. The system can not estimate the offsets of two or more consecutive joints that rotate over the same axis, affecting all the sensors' measurements at once. Such a structure allows for multiple combinations of the joints, leading to the exact same orientation of the end-effector, which results in a wide range of value to which the offsets can converge. This observability problem is a major limitation of our system that can not be solved at a software level and must be always considered. Nevertheless, our system is able to calibrate any other kinematic model regardless of its joints' orientation and chain order, which makes this an extremely useful tool for robotics.
+
+We have presented a robust, online calibration system for
+the joints of a robot head. This calibration system is able to provide accurate estimates for the offsets of the joints, irrespective of the head initial configuration.
+The approach uses information from the embedded inertial
+sensor, the relative encoders of the joints and vision and it performs robustly in the presence of noise and disturbances such as backlash in some joints. As opposed to other methods, our approach is very efficient and calibration can be achieved in a matter of a couple of seconds and a few movements of the robot head.
+
+Our work provides a way of correctly initializing the
+robot, no matter what the robot’s starting position might
+be, which is absolutely mandatory before the robot can
+engage in complex tasks. We present results with the iCub
+head, as humanoid robots represent the best metaphor of
+complex sensorimotor chains. Nevertheless, the proposed system was designed to be as general as possible so it could easily calibrate almost any kinematic model, if fully observable, using information from the embedded sensors only.
+
+The relevance of this calibration procedure is that it allows the system to maintain an accurate internal model of its sensorimotor chains. These models are key for the control of humanoid robots, as the complexity of the tasks and diversity of the operational environments may be overwhelming. Instead, these models allow the system to contrast its observations to model-based predictions, substantially simplifying certain tasks, a mechanism similar to the one presumably used by humans.

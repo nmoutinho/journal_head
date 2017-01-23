@@ -1,0 +1,26 @@
+\begin{abstract}
+%\boldmath
+
+%Humanoid robotic platforms are rapidly increasing their level of complexity in terms of the number of degrees of freedom (DOF) or the type of used sensors in order to perform extremely demanding tasks. Unfortunately, these platforms always require a calibration process before executing a certain task, which can be quite challenging. A transverse limitation to most humanoid robots consists in using relative encoders in their joints instead of absolute ones, which fix their zero value at the position they are turned on thus leading to an erroneous state of the robot's pose. 
+
+% IROS version:
+Humanoid robots are complex sensorimotor systems where the existence of internal models are of utmost importance both for control purposes and for predicting the changes in the world arising from the system's own actions. This so-called expected perception relies on the existence of accurate internal models of the robot's sensorimotor chains.
+
+%In this work we propose an online calibration methodology for a humanoid robot head that calibrates its entire kinematic model by estimating the offsets for each motor joint using non-linear filtering techniques and information from the embedded sensors only.
+%We show that our method can correctly estimate the offsets for each joint while adapting to sudden changes that may occur during operation.
+%Experiments with the iCub robotic heads are presented and illustrate the performance of the methodology as well as the advantages of using such an approach.
+
+% IROS version:
+We assume that the kinematic model is known in advance but that the absolute offsets of the different axes cannot be directly retrieved from encoders.  We propose a method to estimate such parameters, the zero position of the joints of a humanoid robotic head, by relying on proprioceptive sensors such as relative encoders, inertial sensing and visual input. 
+
+We show that our method can estimate the correct offsets of the different joints (i.e. absolute positioning) in a continuous, online  manner. Not only the method is robust to noise but it can as well cope with and adjust to abrupt changes in the parameters.
+%Experiments with three different robotic heads are presented and illustrate the performance of the methodology as well as the advantages of using such an approach.
+Experiments with the iCub robotic heads are presented and illustrate the performance of the methodology as well as the advantages of using such an approach.
+
+\end{abstract}
+
+
+\begin{IEEEkeywords}
+Kinematic, calibration, humanoid, robot, head
+\end{IEEEkeywords}
+

@@ -1,0 +1,209 @@
+\section{Experiments and Results}\label{sec:experiments_results}
+
+In this section we will evaluate the proposed architecture for the head calibration system. We will perform simulated and real experiments to evaluate the system in terms of its accuracy and repeatability. The real experiments were performed using the iCub robotic platform, \cite{Metta08}, more specifically the head \cite{Beira06}. The iCub was developed in the context of the EU project RobotCub and was adopted by more than 20 laboratories worldwide. The full robot has 53 DOF with the head having 6 DOF from the neck to each of the eyes, as seen in figure \ref{fig:head_kinematic_model_prob_form}a).
+
+For each joint the robot's head is equipped with relative encoders that are extremely precise but are unable to measure the absolute zero position of the joint. The head is also equipped with an Xsens IMU that measures the linear accelerations and angular velocities at a frequency of 100Hz. This sensor is placed on top of the head right before the eyes tilt joint, $\delta_3$, as seen in figure \ref{fig:head_kinematic_model_prob_form}a). Finally the head is equipped with two Pointgrey Dragonfly cameras, that work at 30Hz and provide RGB images with VGA resolution ($640\times480$pixel). These cameras have $4.7\times3.5$mm CCD sensors and a field of view of $87.3\degree$ (horizontal) and $70.8\degree$ (vertical). The cameras are the last sensors in the kinematic chain being affected by all the joints. The intrinsic parameters of the cameras were calibrated using the Bouguet Toolbox \cite{Bouguet08} and where the radial distortion was completely eliminated. The calibrated parameters are presented in the following table:
+
+\begin{table}
+\centering
+\begin{tabular}{ccc}
+ \hline
+ Parameter & Left Camera & Right Camera \\
+ \hline
+ Width (pixel) & $640$ & $640$\\
+ Height (pixel) & $480$ & $480$ \\
+ $f_x$ (pixel) & $332.706$ & $342.367$\\
+ $f_y$ (pixel) & $382.658$ & $389.545$\\
+ $c_x$ (pixel) & $348.316$ & $350.601$\\
+ $c_y$ (pixel) & $241.872$ & $251.704$\\
+ \hline
+\end{tabular}
+\caption{Intrinsic parameters of the cameras: resolution (Width and Height), focal lengths ($f_x$ and $f_y$) and optical centers ($c_x$ and $c_y$)}
+\label{tab:intrinsic_parameters}
+\end{table}
+
+In order to validate the proposed architecture we performed simulated experiments where all the sensors measurements were simulated and fed to the system just like in the real case. For both cases, the simulated and real, we created several datasets. Each dataset contains information from all the sensors at every time step: the linear accelerations and angular velocities from the IMU, the motor encoders and stereo images from both cameras (or simulated image features in the simulation case).
+
+The head calibration system was designed to calibrate the robotic head from joint $0$, corresponding to the neck tilt joint, to joint $5$, corresponding to the left eye pan joint, as seen in figure \ref{fig:head_kinematic_model_prob_form}a). Each of these encoders is unable to provide the absolute zero position of each joint, resetting the encoders values to zero every time the motors are switched off. The calibration procedure for the simulation and real case goes as follows: the motors are initialized at an arbitrary position and we start the data acquisition while randomly rotating the head, as seen in figure \ref{fig:head_calibration_procedure}. Several datasets were acquired either for the same encoders offsets and for different encoders offsets, to completely evaluate the system in terms of its accuracy and repeatability.
+
+\begin{figure}
+    \centering
+    \begin{tabular}{ccc}
+        \includegraphics[width=0.25\columnwidth]{images/pos_1} &  
+        \includegraphics[width=0.25\columnwidth]{images/pos_2} & 
+        \includegraphics[width=0.25\columnwidth]{images/pos_3} \\
+        \includegraphics[width=0.25\columnwidth]{images/pos_4} &  
+        \includegraphics[width=0.25\columnwidth]{images/pos_5} & 
+        \includegraphics[width=0.25\columnwidth]{images/pos_6} \\
+    \end{tabular}
+    \caption{The head calibration procedure where the head is initialized at a random position and is rotated in order acquire data for the different experiments.}
+    \label{fig:head_calibration_procedure}
+\end{figure}
+
+To initialize the system state uncertainty as well as the transition process noise we took into consideration the nature of the problem. We are estimating joint offsets that must be combined with the encoders values to provide calibrated measurements. We are initializing the system state with the first observations received from the encoders, as soon as the calibration system starts to run. For this reason, we have a large uncertainty at the beginning considering the physical limits of each joint. To ensure the system's convergence, the state's initial uncertainty must be large enough to include all the possible values the offsets could take. Therefore we initialized each offset uncertainty with a large value, $40$deg. The transition process noise was set to $0.05$deg, so it could adapt to sudden situations while keeping the estimates as constant as possible.
+
+We analysed the noise levels that described each of the sensors' measurements, assumed to be zero mean Gaussian noise. The standard deviations values are represented in table \ref{tab:sensors_noise}.
+
+\begin{table}
+\centering
+\begin{tabular}{ccc}
+ \hline
+ Sensor Measurement & Symbol & Std \\
+ \hline
+ Linear Acceleration & $\sigma_{Ra}^{0}$ & $0.0447m/s^2$\\
+  Angular Velocities & $\sigma_{Rw}^{0}$ & $0.5$deg/s\\
+  Encoders & $\sigma_{Re}^{0}$ & $0.028$deg\\
+  Image Features & $\sigma_{Rf}^{0}$ & $2$pixel\\
+ \hline
+\end{tabular}
+\caption{Sensors measurements noise.}
+\label{tab:sensors_noise}
+\end{table}
+
+In case of the image features, for this system we used the Harris Corner Detector explained in subsection \ref{subsec:harris_corner_detector} and Normalized Cross Correlation to track features between two consecutive images. Figure \ref{fig:harris_corners_tracking} shows an example of image features acquisition and corresponding tracking.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.75\columnwidth]{images/harris_corners_tracking}
+\label{fig:harris_corners_tracking}
+\caption{Example of image features acquisition and tracking using the Harris Corner Detector and Normalized Cross Correlation between two images obtained at consecutive time instants $k$ and $k+1$.}
+\end{figure}
+
+The features search in the next image was done within a limited region around the previous location of the features to reduce the computation time, assuming the images movement was small enough between two consecutive time instants.
+
+\subsection{Simulated Experiments}\label{sec:simulated_experiments}
+
+It is very difficult to measure the real absolute zero position of each motor joint considering there is no ground-truth for the real robot, otherwise we wouldn't require a calibration procedure. The only way to evaluate the calibration system in terms of its accuracy is by testing it with simulated experiments. Each experiment simulated the real conditions of the robot and introduced the same level of noise for each sensor according to the estimated values in table \ref{tab:sensors_noise}. It is very important to create simulated environments whose conditions are similar to the real ones.
+
+We performed $5$ experiments where we initialized each joint with diverse offset values. For each experiment we performed $5$ trials where we simulated the rotation of the robot head. Starting from an arbitrary position, the rotation step for an $i$th joint, $\delta_i^{step}$ was sampled from a Uniform Distribution $\delta_i^{step}\sim\mathcal{U}\left(-\theta,\theta\right)$ with $\theta=0.1$deg. These values were chosen in order to best replicate the real movement that was performed by hand. Between each two steps we sampled $N=50$ virtual image features by first generating their $3D$ coordinates, within a virtual scenario ranging from $250$mm to $4000$mm, for a certain time instant and calculating their matched coordinates in the consecutive instant by using the complete roto-translation of the head. The virtual image features used as measurements were then obtained by projecting each $3D$ generated point into the corresponding virtual images. Zero-mean Gaussian noise $e$ was added to the matched image coordinates, sampled from normal distribution $e\sim\mathcal{N}\left(0,\sigma^{2}\right)$, with a standard deviation of $\sigma=2$pixel to simulate the real noise in the matching process.
+
+The results obtained using the proposed algorithm are represented in figure \ref{fig:head_offsets_convergence} and in table \ref{tab:head_offsets_convergence}.
+
+\begin{figure*}
+\centering
+\begin{tabular}{ccc}
+ \includegraphics[width=0.32\linewidth]{images/results/neck_tilt_offsets_sim} &  
+ \includegraphics[width=0.32\linewidth]{images/results/neck_swing_offsets_sim} &
+ \includegraphics[width=0.32\linewidth]{images/results/neck_pan_offsets_sim} \\
+  a) $\delta_0$ - Neck Tilt & b) $\delta_1$ - Neck Swing & c) $\delta_2$ - Neck Pan \\
+ \includegraphics[width=0.32\linewidth]{images/results/eyes_tilt_offsets_sim} &
+ \includegraphics[width=0.32\linewidth]{images/results/left_eye_pan_offsets_sim} & 
+ \includegraphics[width=0.32\linewidth]{images/results/right_eye_pan_offsets_sim}\\
+ d) $\delta_3$ - Eyes Tilt & e) $\delta_4$ - Left Eye Pan & f) $\delta_5$ - Right Eye Pan
+\end{tabular}
+\caption{Head calibration offsets estimates for $5$ experiments, with $5$ trials each, in simulation: Experiment 1 (in red), Experiment 2 (in green), Experiment 3 (in blue), Experiment 4 (in cyan) and Experiment 5 (in yellow)}
+\label{fig:head_offsets_convergence}
+\end{figure*}
+
+\begin{table}
+\centering
+\begin{tabular}{lcccccc}
+ \hline
+ \# Experiment & $\delta_0$(deg) & $\delta_1$(deg) & $\delta_2$(deg) & $\delta_3$(deg) & $\delta_4$(deg) & $\delta_5$(deg) \\
+ \hline
+$1$ (ground-truth) & 13.00 & 24.00 & 38.00 & 30.00 & 18.00 & -9.00\\
+$1$ (mean) & 13.02 & 23.97 & 38.01 & 31.40 & 17.99 & -7.27\\
+$1$ (std) & 0.01 & 0.01 & 0.02 & 0.29 & 0.19 & 0.16 \\
+$1$ (mean error) & 0.02 & 0.02 & 0.01 & 1.40 & 0.01 & 1.72\\
+ \hline
+$2$ (ground-truth) & -9.00 & -11.00 & -35.00 & -39.00 & -24.00 & -9.00\\
+$2$ (mean) & -9.01 & -11.02 & -34.98 & -39.11 & -22.49 & -8.36\\
+$2$ (std) & 0.01 & 0.02 & 0.03 & 0.41 & 0.17 & 0.40 \\
+$2$ (mean error) & 0.01 & 0.02 & 0.01 & 0.12 & 1.50 & 0.63\\
+ \hline
+$3$ (ground-truth) & -41.00 & -3.00 & 30.00 & -8.00 & -35.00 & 0.00\\
+$3$ (mean) & -40.95 & -3.01 & 30.00 & -8.26 & -32.80 & 0.40\\
+$3$ (std) & 0.01 & 0.01 & 0.02 & 0.30 & 0.25 & 0.38 \\
+$3$ (mean error) & 0.04 & 0.01 & 0.01 & 0.26 & 2.19 & 0.40\\
+ \hline
+$4$ (ground-truth) & -20.00 & -6.00 & 19.00 & 18.00 & 29.00 & 4.00\\
+$4$ (mean) & -19.97 & -6.01 & 19.00 & 19.46 & 28.34 & 4.94\\
+$4$ (std) & 0.01 & 0.01 & 0.02 & 0.21 & 0.18 & 0.20 \\
+$4$ (mean error) & 0.02 & 0.01 & 1.01 & 1.46 & 0.65 & 0.94\\
+ \hline
+$5$ (ground-truth) & -14.00 & -5.00 & -56.00 & -43.00 & -33.00 & 12.00\\
+$5$ (mean) & -13.99 & -5.01 & -56.01 & -43.14 & -31.55 & 11.67\\
+$5$ (std) & 0.02 & 0.01 & 0.02 & 0.38 & 0.27 & 0.46\\
+$5$ (mean error) & 0.00 & 0.01 & 0.00 & 0.14 & 1.44 & 0.32\\
+ \hline
+\end{tabular}
+\caption{The ground-truth and statistical results of the head calibration offsets estimates for $5$ experiments, with $5$ trials each.}
+\label{tab:head_offsets_convergence}
+\end{table}
+
+\subsubsection{Accuracy and Repeatability}
+
+To evaluate the system in terms of its accuracy we must compare the estimates with the ground-truth values represented in table \ref{tab:head_offsets_convergence}. As we can see the error between the real and estimated offsets is very low independently of the starting position of the head. In this case we have a maximum error of $7\%$ (or $2.19$deg) for the left eye pan joint in experiment $4$. The eyes offsets are the ones presenting the largest errors which can be explained by the approximation taken for the calibration system, where we are assuming the world is static and all points are represented at infinity which is not true and may introduce parallax errors that are compensated by the system as errors in the joint space. However we can consider this approximation is still valid for small rotations in short steps between two consecutive time instants, considering our system presents an average error of $0.99$deg for the mentioned eyes joints ($\delta_4$ and $\delta_5$). All the other joints are able to converge to its correct values with much lower errors thus proving the proposed calibration system is accurate. 
+
+The system can converge in less than $300$ iterations, which considering the lowest sensor runs at $30$Hz and the system works in real time, corresponds to a convergence in less than $10$s. This is very important since the robot can be rapidly calibrated before operation without consuming much of the operator's time. We can see each estimate remains almost constant after convergence, even if the head is continuously rotating.
+
+The standard deviation values represented in table \ref{tab:head_offsets_convergence} show the repeatability of the system, where it always converges to the same offsets under different operation conditions without a full reset of the encoders. This is extremely important considering the robot is being calibrated in an online fashion and it should always maintain its offsets estimates as constant as possible, in order to keep a well calibrated internal model. 
+
+\subsection{Real Experiments}\label{sec:real_experiments}
+
+The validation of the proposed architecture was very important before testing it in the real robot. The quality of the previous results gave us confidence to test the calibration system in the real robot. Unfortunately, in the real case, there is no ground-truth for the real offsets of the robot. Therefore we can only analyse our system in terms of its repeatability. 
+
+We performed four experiments where we initialized the robot head at different arbitrary positions. For each experiment we performed five trials where we randomly rotated the robot head and eyes by hand during $33.33$ seconds ($1000$ iterations) so as to span most of the range of the robots joints. The estimated results are represented in figure \ref{fig:real_head_offsets_convergence} and in table \ref{tab:real_head_offsets_convergence}. We are not plotting the real encoder values during head motion since it it extremely clutter, considering each motion was unique and totally arbitrary.
+
+\begin{figure*}
+\centering
+\begin{tabular}{ccc}
+ \includegraphics[width=0.32\linewidth]{images/results/neck_tilt_offsets} &  
+ \includegraphics[width=0.32\linewidth]{images/results/neck_swing_offsets} &
+ \includegraphics[width=0.32\linewidth]{images/results/neck_pan_offsets} \\
+  a) $\delta_0$ - Neck Tilt & b) $\delta_1$ - Neck Swing & c) $\delta_2$ - Neck Pan \\
+ \includegraphics[width=0.32\linewidth]{images/results/eyes_tilt_offsets} &
+ \includegraphics[width=0.32\linewidth]{images/results/left_eye_pan_offsets} & 
+ \includegraphics[width=0.32\linewidth]{images/results/right_eye_pan_offsets}\\
+ d) $\delta_3$ - Eyes Tilt & e) $\delta_4$ - Left Eye Pan & f) $\delta_5$ - Right Eye Pan
+\end{tabular}
+\caption{Head calibration offsets estimates for $4$ experiments, with $5$ trials each, with the real robot: Experiment 1 (in red), Experiment 2 (in green), Experiment 3 (in blue) and Experiment 4 (in cyan)}
+\label{fig:real_head_offsets_convergence}
+\end{figure*}
+
+\begin{table}
+\centering
+\begin{tabular}{lcccccc}
+ \hline
+ $\#$ Experiment & $\delta_0$(deg) & $\delta_1$(deg) & $\delta_2$(deg) & $\delta_3$(deg) & $\delta_4$(deg) & $\delta_5$(deg) \\
+ \hline
+$1$ (mean) & -41.16 & -40.92 & 62.35 & 3.49 & -48.61 & 44.79 \\
+$1$ (std) & 0.44 & 0.25 & 0.30 & 0.06 & 0.24 & 0.23 \\
+\hline
+$2$ (mean) & -46.96 & 42.73 & 63.14 & 1.35 & -49.60 & -47.29 \\
+$2$ (std) & 0.36 & 0.24 & 0.42 & 0.30 & 0.35 & 0.41 \\
+\hline
+$3$ (mean) & 42.81 & 11.43 & -53.95 & -36.18 & -49.82 & -46.27 \\
+$3$ (std) & 0.38 & 0.32 & 0.19 & 0.23 & 0.24 & 0.26 \\
+\hline
+$4$ (mean) & 41.99 & 35.26 & 61.88 & 34.71 & 46.96 & -46.45 \\
+$4$ (std) & 0.30 & 0.36 & 0.31 & 0.38 & 0.21 & 0.30 \\
+ \hline
+\end{tabular}
+\caption{Mean and standard deviation values of the offsets estimates for all the experiments ($5$ trials for each experiment)}
+\label{tab:real_head_offsets_convergence}
+\end{table}
+
+\subsubsection{Repeatability}
+
+In figure \ref{fig:real_head_offsets_convergence}, we can see the system's repeatability considering that, for each experiment, it converged to very similar estimates under different operation of the robot. These results can be observed in table \ref{tab:real_head_offsets_convergence} where the maximum standard deviation value is $0.44$deg for all the four different configurations. As already mentioned in section \ref{sec:simulated_experiments} the system's repeatability is very important to guarantee the quality of the filter. 
+
+During operation we noticed there were backlash zones in some of the joints, specially those carrying most of the weight. Within these backlash zones the encoders can not provide any measurements even though the joint is rotating in its motor shaft. However, the backlash was not reflected in the final estimates which shows that our system can adapt to sudden changes and perturbation that may occur during operation, mainly due to sensor fusion. The IMU and the cameras could perceive movement even though the encoders were telling the exact opposite. Sensor fusion is extremely useful to increase the robustness of the system in several situations where one or more sensors could fail. This case is a clear example of how multiple sensors integrated into a single architecture generate a better response than each one of them separated.
+
+The accuracy of the head calibration system is hard to measure given the lack of ground-truth for each joint. Using the available sensors we measured the accuracy of the neck joints by comparing the real IMU's linear acceleration with the one predicted by the calibrated kinematic model of the robot head. In figure \ref{fig:real_head_imu} it is represented the real and predicted linear acceleration measurements for the three principal axis, for experiments $1$ and $2$, using only data from one trial for a better comprehension of the figure (these results are analogous for all the other experiments and trials).
+
+\begin{figure*}
+\centering
+\begin{tabular}{ccc}
+ \includegraphics[width=0.32\linewidth]{images/results/gravity_vector_x} &
+ \includegraphics[width=0.32\linewidth]{images/results/gravity_vector_y} &
+ \includegraphics[width=0.32\linewidth]{images/results/gravity_vector_z} \\
+ a) Gravity component $g_x$ &
+ b) Gravity component $g_y$ &
+ c) Gravity component $g_z$ \\
+\end{tabular}
+\caption{Real and predicted gravity vectors for Experiment $1$ (in red) and Experiment $2$ (in green), representing only one trial per experiment.}
+\label{fig:real_head_imu}
+\end{figure*}
+
+As we can see the real and predicted signals are correctly aligned for different configurations of the head, with the prediction matching the real signal in more than $99\%$ ot the time. It is important to refer that it is assumed that the IMU is perfectly mounted on the top of the head, without any mounting error which may not be the case. In that case, the mounting error of the sensor will be reflected in the offsets estimates in order to approximate the real and predicted IMU signals. If the kinematic model can correctly predict the IMU measurements, then the offsets estimates converged to their correct values. 
